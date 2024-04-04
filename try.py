@@ -1,34 +1,44 @@
 from ib_insync import IB, Future, util, Order
 
+
+
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=2)
+ib.connect('127.0.0.1', 7497, clientId=4)
 ib
-from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
-from ibapi.contract import Contract
+# Update the contract details as needed
+contract = Future(symbol='ES', lastTradeDateOrContractMonth='202406', exchange='CME')
 
-class IBClient(EWrapper, EClient):
-    def __init__(self):
-        EClient.__init__(self, self)
-    
-    def error(self, reqId, errorCode, errorString):
-        print("Error:", reqId, errorCode, errorString)
+# Attempt to qualify the contract
+try:
+    qualified_contract = ib.qualifyContracts(contract)[0]
+    print("Contract qualified successfully:", qualified_contract)
+except Exception as e:
+    print(f"Error qualifying contract: {e}")
+    qualified_contract = None
 
-    def contractDetails(self, reqId, contractDetails):
-        symbol = contractDetails.contract.symbol
-        print("Symbol:", symbol)
+if qualified_contract:
+    # Request historical data for the qualified contract
+    historical_data = ib.reqHistoricalData(
+        qualified_contract, endDateTime='', durationStr='30 D',
+        barSizeSetting='1 hour', whatToShow='MIDPOINT', useRTH=True)
 
-def main():
-    client = IBClient()
-    client.connect("127.0.0.1", 7497, clientId=123)
-
-    # 请求所有合同详细信息
-    contract = Contract()
-    client.reqContractDetails(0, contract)
-
-    client.run()
-
-if __name__ == "__main__":
-    main()
+    if historical_data:
+        df = util.df(historical_data)
+        print(df.head())
+    else:
+        print("No historical data returned.")
+else:
+    print("Unable to request historical data due to contract issues.")
 
 
+# ib.reqMarketDataType(3)  # Switch to delayed data if necessary
+# 
+# historical_data = ib.reqHistoricalData(
+#     contract, endDateTime='', durationStr='30 D',
+#     barSizeSetting='1 hour', whatToShow='MIDPOINT', useRTH=True)
+# 
+# df = util.df(historical_data)
+# print(df.head())
+
+if __name__ == '__main__':
+    print("ok")
