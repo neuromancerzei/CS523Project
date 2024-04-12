@@ -1,6 +1,6 @@
 """
 generate word2vec model, and save to word2vec.model
-generate train_data.csv, valid_data.csv, test_data.csv
+generate market-aux-vectors_data.csv
 """
 import collections
 from typing import Callable
@@ -281,8 +281,8 @@ class MarketAuxDataSet(object):
 
 
 class SentimentAnalysisData(object):
-    WORD2VEC_MODEL_PATH = "dataset/word2vec.model"
-    vector_size = 100
+    vector_size = 300
+    WORD2VEC_MODEL_PATH = f"dataset/word2vec{vector_size}.model"
     UNK_KEY = "<unk>"
     PAD_KEY = "<pad>"
 
@@ -316,7 +316,9 @@ class SentimentAnalysisData(object):
         #     self.train_data_debug, self.valid_data_debug, self.test_data_debug = self._load_imbd()
 
     def _load_market_ananlysis(self):
-        df = pandas.read_csv("dataset/market-aux.csv")
+        df1 = pandas.read_csv("dataset/market-aux.csv")
+        df2 = pandas.read_csv("dataset/market-aux/2024-03-01.csv")
+        df = pandas.concat([df1, df2], axis=0)
         self.data = MarketAuxDataSet(df)
         self.data.sentiment_to_labels()
 
@@ -438,7 +440,7 @@ class SentimentAnalysisData(object):
 
     def save_data(self):
         selected_colums = [MarketAuxDataSet.VECTOR_FREATURE, MarketAuxDataSet.LABEL_FEATURE]
-        self.data.df[selected_colums].to_csv("dataset/market-aux-vectors_data.csv", index=False)
+        self.data.df[selected_colums].to_csv(f"dataset/market-aux-vectors{self.vector_size}_data.csv", index=False)
 
 
 if __name__ == '__main__':
